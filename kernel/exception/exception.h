@@ -12,21 +12,33 @@
 
 #pragma once
 
-#include <common/vars.h>
+#define SYNC_EL1t		0
+#define IRQ_EL1t		1
+#define FIQ_EL1t		2
+#define ERROR_EL1t		3
+
+#define SYNC_EL1h		4
+#define IRQ_EL1h		5
+#define FIQ_EL1h		6
+#define ERROR_EL1h		7
+
+#define SYNC_EL0_64             8
+#define IRQ_EL0_64              9
+#define FIQ_EL0_64              10
+#define ERROR_EL0_64            11
+
+#define SYNC_EL0_32             12
+#define IRQ_EL0_32              13
+#define FIQ_EL0_32              14
+#define ERROR_EL0_32            15
+
+#ifndef __ASM__
 #include <common/types.h>
-#include <common/mmu.h>
 
-#define PAGE_SIZE (0x1000)
+/* assembly helper functions */
+void set_exception_vector(void);
+void exception_init(void);
+void exception_init_per_cpu(void);
 
-void mm_init();
-void set_page_table(paddr_t pgtbl);
-
-static inline bool is_user_addr(vaddr_t vaddr)
-{
-	return vaddr < KBASE;
-}
-
-static inline bool is_user_addr_range(vaddr_t vaddr, size_t len)
-{
-	return (vaddr + len >= vaddr) && is_user_addr(vaddr + len);
-}
+void eret_to_thread(u64 sp);
+#endif				/* __ASM__ */

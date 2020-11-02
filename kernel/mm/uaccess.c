@@ -10,23 +10,29 @@
  *   See the Mulan PSL v1 for more details.
  */
 
-#pragma once
-
+#include <common/util.h>
 #include <common/vars.h>
 #include <common/types.h>
-#include <common/mmu.h>
+#include <common/kprint.h>
+#include <common/macro.h>
 
-#define PAGE_SIZE (0x1000)
+/*
+ * Currently, we enable EL1 (kernel) to directly access EL0 (user)  memory.
+ * But, El1 cannot execute EL0 code.
+ */
 
-void mm_init();
-void set_page_table(paddr_t pgtbl);
-
-static inline bool is_user_addr(vaddr_t vaddr)
+int copy_from_user(char *kernel_buf, char *user_buf, size_t size)
 {
-	return vaddr < KBASE;
+	/* validate user_buf */
+	BUG_ON((u64) user_buf >= KBASE);
+	memcpy(kernel_buf, user_buf, size);
+	return 0;
 }
 
-static inline bool is_user_addr_range(vaddr_t vaddr, size_t len)
+int copy_to_user(char *user_buf, char *kernel_buf, size_t size)
 {
-	return (vaddr + len >= vaddr) && is_user_addr(vaddr + len);
+	/* validate user_buf */
+	BUG_ON((u64) user_buf >= KBASE);
+	memcpy(user_buf, kernel_buf, size);
+	return 0;
 }

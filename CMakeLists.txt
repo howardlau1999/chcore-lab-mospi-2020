@@ -8,6 +8,10 @@ set(CHCORE_ARCH "aarch64")
 
 mark_as_advanced(CMAKE_INSTALL_PREFIX)
 
+if(TEST)
+    add_definitions("-DTEST=${TEST}")
+endif()
+
 if (CMAKE_BUILD_TYPE STREQUAL "Debug")
     add_definitions("-DLOG_LEVEL=2")
 else ()
@@ -33,16 +37,25 @@ project (chos C ASM)
 
 set(BOOTLOADER_PATH     "boot")
 set(KERNEL_PATH         "${CMAKE_CURRENT_SOURCE_DIR}/kernel")
+set(USER_PATH           "${CMAKE_CURRENT_SOURCE_DIR}/user")
 
 
 set(KERNEL_ARCH_PATH        "${KERNEL_PATH}")
 set(KERNEL_MM_PATH          "${KERNEL_PATH}/mm")
+set(KERNEL_SYSCALL_PATH     "${KERNEL_PATH}/syscall")
+set(KERNEL_EXCEPTION_PATH   "${KERNEL_PATH}/exception")
+set(KERNEL_PROCESS_PATH     "${KERNEL_PATH}/process")
+set(KERNEL_SCHED_PATH       "${KERNEL_PATH}/sched")
 
 include_directories(".")
 include_directories("${KERNEL_PATH}")
 
 add_subdirectory("${KERNEL_ARCH_PATH}")
 add_subdirectory("${KERNEL_MM_PATH}")
+add_subdirectory("${KERNEL_PROCESS_PATH}")
+add_subdirectory("${KERNEL_SYSCALL_PATH}")
+add_subdirectory("${KERNEL_EXCEPTION_PATH}")
+add_subdirectory("${KERNEL_SCHED_PATH}")
 
 set(BINARY_KERNEL_IMG_PATH "CMakeFiles/kernel.img.dir")
 set(init_object
@@ -62,6 +75,11 @@ include("${BOOTLOADER_PATH}/config.cmake")
 add_executable(kernel.img ${files} 
     $<TARGET_OBJECTS:${PROJECT_NAME}-arch>
     $<TARGET_OBJECTS:${PROJECT_NAME}-mm>
+    $<TARGET_OBJECTS:${PROJECT_NAME}-object>
+    $<TARGET_OBJECTS:${PROJECT_NAME}-syscall>
+    $<TARGET_OBJECTS:${PROJECT_NAME}-sched>
+    $<TARGET_OBJECTS:${PROJECT_NAME}-exception>
+    ${USER_PATH}/binary_include.S
 )
 
 set_property(

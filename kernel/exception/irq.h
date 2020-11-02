@@ -12,21 +12,12 @@
 
 #pragma once
 
-#include <common/vars.h>
 #include <common/types.h>
-#include <common/mmu.h>
+#include <process/thread.h>
 
-#define PAGE_SIZE (0x1000)
+#define MAX_IRQ_NUM	256
+#define HANDLE_KERNEL	0
+#define HANDLE_USER	1
 
-void mm_init();
-void set_page_table(paddr_t pgtbl);
-
-static inline bool is_user_addr(vaddr_t vaddr)
-{
-	return vaddr < KBASE;
-}
-
-static inline bool is_user_addr_range(vaddr_t vaddr, size_t len)
-{
-	return (vaddr + len >= vaddr) && is_user_addr(vaddr + len);
-}
+void enable_irq(void);
+void disable_irq(void);

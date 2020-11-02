@@ -12,21 +12,12 @@
 
 #pragma once
 
-#include <common/vars.h>
-#include <common/types.h>
-#include <common/mmu.h>
+struct process_metadata {
+	u64 phdr_addr;
+	u64 phentsize;
+	u64 phnum;
+	u64 flags;
+	u64 entry;
+};
 
-#define PAGE_SIZE (0x1000)
-
-void mm_init();
-void set_page_table(paddr_t pgtbl);
-
-static inline bool is_user_addr(vaddr_t vaddr)
-{
-	return vaddr < KBASE;
-}
-
-static inline bool is_user_addr_range(vaddr_t vaddr, size_t len)
-{
-	return (vaddr + len >= vaddr) && is_user_addr(vaddr + len);
-}
+#define ENV_SIZE_ON_STACK 0x1000

@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.14)
 
-file(GLOB OBJECT_SOURCE "*.c")
+file(GLOB OBJECT_SOURCE "*.c" "*.S")
 add_library(${PROJECT_NAME}-mm OBJECT ${OBJECT_SOURCE})
 target_include_directories(
 	${PROJECT_NAME}-mm

@@ -10,23 +10,33 @@
  *   See the Mulan PSL v1 for more details.
  */
 
-#pragma once
-
-#include <common/vars.h>
 #include <common/types.h>
-#include <common/mmu.h>
+#include <common/uart.h>
+#include <common/uaccess.h>
+#include <common/kmalloc.h>
+#include <common/mm.h>
+#include <common/kprint.h>
+#include "syscall_num.h"
 
-#define PAGE_SIZE (0x1000)
-
-void mm_init();
-void set_page_table(paddr_t pgtbl);
-
-static inline bool is_user_addr(vaddr_t vaddr)
+void sys_debug(long arg)
 {
-	return vaddr < KBASE;
+	kinfo("[syscall] sys_debug: %lx\n", arg);
 }
 
-static inline bool is_user_addr_range(vaddr_t vaddr, size_t len)
+void sys_putc(char ch)
 {
-	return (vaddr + len >= vaddr) && is_user_addr(vaddr + len);
+	/*
+	 * Lab3: Your code here
+	 * Send ch to the screen in anyway as your like
+	 */
 }
+
+/*
+ * Lab3: Your code here
+ * Update the syscall table as you like to redirect syscalls
+ * to functions accordingly
+ */
+const void *syscall_table[NR_SYSCALL] = {
+	[0 ... NR_SYSCALL - 1] = sys_debug,
+	/* lab3 syscalls finished */
+};

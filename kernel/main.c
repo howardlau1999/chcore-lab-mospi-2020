@@ -11,10 +11,15 @@
  */
 
 #include <common/kprint.h>
-#include <common/macro.h>
-#include <common/uart.h>
 #include <common/machine.h>
+#include <common/macro.h>
 #include <common/mm.h>
+#include <common/uart.h>
+#include <common/vars.h>
+#include <exception/exception.h>
+#include <common/types.h>
+#include <process/thread.h>
+#include <sched/sched.h>
 
 ALIGN(STACK_ALIGNMENT)
 char kernel_stack[PLAT_CPU_NUM][KERNEL_STACK_SIZE];
@@ -47,8 +52,21 @@ void main(void *addr)
 	mm_init();
 	kinfo("mm init finished\n");
 
+	/* Init exception vector */
+	exception_init();
+	kinfo("[ChCore] interrupt init finished\n");
+
+#ifdef TEST
+	/* Create initial thread here */
+	process_create_root(TEST);
+	kinfo("[ChCore] root thread init finished\n");
+#else
+	/* We will run the kernel test if you do not type make bin=xxx */
 	break_point();
-	return;
+	BUG("No given TEST!");
+#endif
+
+	eret_to_thread(switch_context());
 
 	/* Should provide panic and use here */
 	BUG("[FATAL] Should never be here!\n");
