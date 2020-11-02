@@ -5,7 +5,8 @@ typedef unsigned int u32;
 
 /* Physical memory address space: 0-1G */
 #define PHYSMEM_START	(0x0UL)
-#define PERIPHERAL_BASE (0x3F000000UL)
+#define PHYSMEM_BOOT_END (0x10000000UL)
+#define PERIPHERAL_BASE (0x20000000UL)
 #define PHYSMEM_END	(0x40000000UL)
 
 /* The number of entries in one page table page */
@@ -88,7 +89,7 @@ void init_boot_pt(void)
 
 	start_entry_idx = GET_L2_INDEX(kva);
 	/* Note: assert(start_entry_idx == 0) */
-	end_entry_idx = start_entry_idx + PERIPHERAL_BASE / SIZE_2M;
+	end_entry_idx = start_entry_idx + PHYSMEM_BOOT_END / SIZE_2M;
 	/* Note: assert(end_entry_idx < PTP_ENTIRES) */
 
 	/*
@@ -105,7 +106,7 @@ void init_boot_pt(void)
 	}
 
 	/* Peripheral memory: PERIPHERAL_BASE ~ PHYSMEM_END */
-	start_entry_idx = end_entry_idx;
+	start_entry_idx = start_entry_idx + PERIPHERAL_BASE / SIZE_2M;
 	end_entry_idx = PHYSMEM_END / SIZE_2M;
 
 	/* Map each 2M page */

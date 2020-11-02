@@ -7,4 +7,5 @@ add_library(${PROJECT_NAME}-arch OBJECT
     common/tools.S
     common/uart.c
     common/printk.c
+    mm/page_table.S
 )

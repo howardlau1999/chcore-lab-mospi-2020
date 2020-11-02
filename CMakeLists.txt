@@ -36,11 +36,13 @@ set(KERNEL_PATH         "${CMAKE_CURRENT_SOURCE_DIR}/kernel")
 
 
 set(KERNEL_ARCH_PATH        "${KERNEL_PATH}")
+set(KERNEL_MM_PATH          "${KERNEL_PATH}/mm")
 
 include_directories(".")
 include_directories("${KERNEL_PATH}")
 
 add_subdirectory("${KERNEL_ARCH_PATH}")
+add_subdirectory("${KERNEL_MM_PATH}")
 
 set(BINARY_KERNEL_IMG_PATH "CMakeFiles/kernel.img.dir")
 set(init_object
@@ -59,6 +61,7 @@ include("${BOOTLOADER_PATH}/config.cmake")
 
 add_executable(kernel.img ${files} 
     $<TARGET_OBJECTS:${PROJECT_NAME}-arch>
+    $<TARGET_OBJECTS:${PROJECT_NAME}-mm>
 )
 
 set_property(

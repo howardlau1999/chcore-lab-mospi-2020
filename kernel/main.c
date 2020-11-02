@@ -14,6 +14,7 @@
 #include <common/macro.h>
 #include <common/uart.h>
 #include <common/machine.h>
+#include <common/mm.h>
 
 ALIGN(STACK_ALIGNMENT)
 char kernel_stack[PLAT_CPU_NUM][KERNEL_STACK_SIZE];
@@ -42,6 +43,9 @@ void main(void *addr)
 	kinfo("123456 decimal is 0%o octal\n", 123456);
 
 	stack_test(5);
+
+	mm_init();
+	kinfo("mm init finished\n");
 
 	break_point();
 	return;
