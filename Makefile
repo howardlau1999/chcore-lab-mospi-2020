@@ -3,7 +3,7 @@ ifndef QEMU
 QEMU := qemu-system-aarch64
 endif
 
-LAB := 4
+LAB := 5
 # try to generate a unique GDB port
 GDBPORT	:= 1234
 QEMUOPTS = -machine raspi3 -serial null -serial mon:stdio -m size=1G -kernel $(BUILD_DIR)/kernel.img -gdb tcp::1234
@@ -37,7 +37,7 @@ gdbport:
 docker: FORCE	
 	./scripts/run_docker.sh
 
-grade: build FORCE
+grade: user build FORCE
 	@echo "make grade"
 	@echo "LAB"$(LAB)": test >>>>>>>>>>>>>>>>>"
 ifeq ($(LAB), 2)

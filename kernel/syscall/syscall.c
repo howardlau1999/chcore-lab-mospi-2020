@@ -85,5 +85,6 @@ const void *syscall_table[NR_SYSCALL] = {
 	/* TMP FS */
 	[SYS_fs_load_cpio] = sys_fs_load_cpio,
 
+	[SYS_top] = sys_top,
 	[SYS_debug] = sys_debug
 };

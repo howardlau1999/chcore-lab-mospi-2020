@@ -1,0 +1,107 @@
+#!/usr/bin/env python3
+
+import re
+from gradelib import *
+
+r = Runner(save("chcore.out"),
+           stop_breakpoint("break_point"))
+
+@test(0, "runing fs_test")
+def test_fs_run():
+    r.make_kernel("fs_test")
+    r.run_qemu(5)
+
+@test(5, parent=test_fs_run)
+def test_fs_server_init():
+    r.match("test_fs_server_init pass!")
+    #line = r.match("Hello, I am thread 0")
+    #r.match_line(line,"Iteration 10, thread 1, cpu 0")
+
+@test(10, parent=test_fs_run)
+def test_fs_scan():
+    line = r.match("/tar has 16 files")
+    r.match("/tar/test has 85 files")
+
+@test(10, parent=test_fs_run)
+def test_fs_write_read():
+    r.match("test_write_read pass!")
+
+@test(5, parent=test_fs_run)
+def test_fs_deepfile():
+    r.match("test_deepfile pass!")
+
+@test(0, "runing init_test")
+def test_shell_run():
+    r.make_kernel("init_test")
+    r.run_qemu(5)
+
+@test(5, parent=test_shell_run)
+def test_readline():
+    r.match("> echo ls tt yy")
+
+@test(5, parent=test_shell_run)
+def test_echo():
+    r.match("abc123XYZ")
+
+@test(5, parent=test_shell_run)
+def test_ls():
+    r.match("init.bin")
+    r.match("tmpfs.srv")
+    r.match("ipc_mem.bin")
+    r.match("spawn_basic.bin")
+    r.match("ipc_reg_server.bin")
+    r.match("spawn_child.bin")
+    r.match("init_test.bin")
+    r.match("ipc_data.bin")
+    r.match("yield_aff.bin")
+    r.match("yield_spin.bin")
+    r.match("yield_multi.bin")
+    r.match("ipc_mem_server.bin")
+    r.match("ipc_reg.bin")
+    r.match("tar")
+    r.match("yield_multi_aff.bin")
+    r.match("spawn_info.bin")
+    r.match("yield_single.bin")
+    r.match("ipc_data_server.bin")
+
+@test(5, parent=test_shell_run)
+def test_ls_dicrectory():
+    r.match("test")
+    r.match("bsdtar_windows.c")
+    r.match("bsdtar_windows.h")
+    r.match("config_freebsd.h")
+    r.match("cmdline.c")
+    r.match("bsdtar.h")
+    r.match("subst.c")
+    r.match("bsdtar.1")
+    r.match("bsdtar.c")
+    r.match("creation_set.c")
+    r.match("read.c")
+    r.match("write.c")
+    r.match("util.c")
+    r.match("CMakeLists.txt")
+    r.match("bsdtar_platform.h")
+
+@test(5, parent=test_shell_run)
+def test_cat():
+    r.match("apple banana This is a test file.")
+
+@test(5, parent=test_shell_run)
+def test_auto_complement():
+    r.match("> yie.*ld_spin.bin")
+    r.match("> sp.*awn_basic.bin")
+
+@test(10, parent=test_shell_run)
+def test_run_executable():
+    r.match("\[Parent\] create the server process.")
+
+TOP_RE = r" *Thread *ffffff00[0-9a-z]{8}[\t ]*Type:[\t ]*[A-Z]{4}[\t ]*State:[\t ]*TS_[A-Z]+[\t ]*CPU[\t ]*[0-3]{1}[\t ]*AFF[\t ]*[0-3]{1}[\t ]*Budget[\t ]*[0-9]{1}"
+#BACKTRACE_RE = r" *LR *ffffff00000[0-9a-z]{5} *FP *ffffff00000d[0-9a-z]{4} *Args *([0-9a-z]+)"
+#BACKTRACE_LR = r" *LR *(ffffff00000[0-9a-z]{5}) *FP *ffffff00000d[0-9a-z]{4} *Args *[0-9a-z]+"
+@test(10, parent=test_shell_run)
+def test_top():
+    matches = re.findall(TOP_RE, r.qemu.output, re.MULTILINE)
+    assert_equal(len(matches), 6)
+
+
+run_tests()

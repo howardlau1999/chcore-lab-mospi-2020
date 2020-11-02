@@ -23,6 +23,7 @@
 #include <process/thread.h>
 #include <exception/irq.h>
 #include <sched/context.h>
+#include <common/lock.h>
 
 /* in arch/sched/idle.S */
 void idle_thread_routine(void);
@@ -142,6 +143,31 @@ void rr_sched_handle_timer_irq(void)
 {
 }
 
+void rr_top(void)
+{
+	u32 cpuid = smp_get_cpu_id();
+	struct thread *thread;
+
+	printk("Current CPU %d\n", cpuid);
+	// lock_kernel();
+
+	for (cpuid = 0; cpuid < PLAT_CPU_NUM; cpuid++) {
+		printk("===== CPU %d =====\n", cpuid);
+		thread = current_threads[cpuid];
+		if (thread != NULL) {
+			print_thread(thread);
+		}
+		if (!list_empty(&rr_ready_queue[cpuid])) {
+			for_each_in_list(thread, struct thread,
+					 ready_queue_node,
+					 &rr_ready_queue[cpuid]) {
+				print_thread(thread);
+			}
+		}
+	}
+	// unlock_kernel();
+}
+
 struct sched_ops rr = {
 	.sched_init = rr_sched_init,
 	.sched = rr_sched,
@@ -149,4 +175,5 @@ struct sched_ops rr = {
 	.sched_dequeue = rr_sched_dequeue,
 	.sched_choose_thread = rr_sched_choose_thread,
 	.sched_handle_timer_irq = rr_sched_handle_timer_irq,
+	.sched_top = rr_top
 };

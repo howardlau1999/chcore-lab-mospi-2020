@@ -24,7 +24,12 @@ mkdir -p ramdisk
 echo "copy user/*.bin to ramdisk."
 #cp lab3/*.bin ramdisk/
 cp lab4/*.bin ramdisk/
+cp lab5/apps/*.bin ramdisk/
+echo "copy user/*.srv to ramdisk."
+cp lab5/tmpfs/*.srv lab5/tmpfs/*.bin ramdisk/
 
 cd ramdisk
+echo "add fs_test files"
+cpio -idmv < ../../lab5/tmpfs/fs_test.cpio 2> /dev/null
 find . | cpio -o -Hnewc > ../ramdisk.cpio
 echo "succeed in building ramdisk."

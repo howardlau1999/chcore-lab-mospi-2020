@@ -42,6 +42,8 @@ void sys_ipc_call(void);
 void sys_ipc_reg_call(void);
 void sys_ipc_return(void);
 
+void sys_top(void);
+
 #define SYS_putc				0
 #define SYS_getc				1
 #define SYS_yield				2
@@ -75,5 +77,6 @@ void sys_ipc_return(void);
 
 #define SYS_handle_brk				201
 
+#define SYS_top                                 252
 #define SYS_fs_load_cpio			253
 #define SYS_debug			        255
