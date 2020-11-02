@@ -18,6 +18,7 @@ include_directories(
     ../../../kernel/mm/
     ../../../kernel/
     ../../include
+    ../../../
 )
 
 target_compile_options(

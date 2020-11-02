@@ -13,4 +13,4 @@ define add-symbol-file-auto
 end
 
 add-symbol-file-auto ./build/kernel.img
-add-symbol-file-auto ./user/build/ramdisk/hello.bin
+add-symbol-file-auto ./user/build/ramdisk/testpf.bin

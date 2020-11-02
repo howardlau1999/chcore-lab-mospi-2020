@@ -12,10 +12,12 @@
 
 #include <common/types.h>
 #include <common/uart.h>
+#include <common/smp.h>
 #include <common/uaccess.h>
 #include <common/kmalloc.h>
 #include <common/mm.h>
 #include <common/kprint.h>
+#include <common/fs.h>
 #include "syscall_num.h"
 
 void sys_debug(long arg)
@@ -31,6 +33,20 @@ void sys_putc(char ch)
 	 */
 }
 
+u32 sys_getc(void)
+{
+	return uart_recv();
+}
+
+/* 
+ * Lab4
+ * Finish the sys_get_cpu_id syscall
+ */
+u32 sys_get_cpu_id(void)
+{
+	return -1;
+}
+
 /*
  * Lab3: Your code here
  * Update the syscall table as you like to redirect syscalls
@@ -39,4 +55,35 @@ void sys_putc(char ch)
 const void *syscall_table[NR_SYSCALL] = {
 	[0 ... NR_SYSCALL - 1] = sys_debug,
 	/* lab3 syscalls finished */
+
+	[SYS_getc] = sys_getc,
+	[SYS_yield] = sys_yield,
+	[SYS_create_device_pmo] = sys_create_device_pmo,
+	[SYS_unmap_pmo] = sys_unmap_pmo,
+	[SYS_create_thread] = sys_create_thread,
+	[SYS_create_process] = sys_create_process,
+	[SYS_register_server] = sys_register_server,
+	[SYS_register_client] = sys_register_client,
+	[SYS_ipc_call] = sys_ipc_call,
+	[SYS_ipc_return] = sys_ipc_return,
+	[SYS_cap_copy_to] = sys_cap_copy_to,
+	[SYS_cap_copy_from] = sys_cap_copy_from,
+	[SYS_set_affinity] = sys_set_affinity,
+	[SYS_get_affinity] = sys_get_affinity,
+	/* 
+	 * Lab4
+	 * Add syscall
+	 */
+	[SYS_get_cpu_id] = sys_get_cpu_id,
+
+	[SYS_create_pmos] = sys_create_pmos,
+	[SYS_map_pmos] = sys_map_pmos,
+	[SYS_write_pmo] = sys_write_pmo,
+	[SYS_read_pmo] = sys_read_pmo,
+	[SYS_transfer_caps] = sys_transfer_caps,
+
+	/* TMP FS */
+	[SYS_fs_load_cpio] = sys_fs_load_cpio,
+
+	[SYS_debug] = sys_debug
 };

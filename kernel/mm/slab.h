@@ -36,4 +36,3 @@ void init_slab(void);
 
 void *alloc_in_slab(u64);
 void free_in_slab(void *addr);
-

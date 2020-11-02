@@ -12,15 +12,28 @@
 
 #include "exception.h"
 #include "esr.h"
+#include "timer.h"
 #include <common/kprint.h>
+#include <common/lock.h>
+#include <common/smp.h>
 #include <common/types.h>
 #include <common/util.h>
 #include <exception/irq.h>
 #include <exception/pgfault.h>
 #include <sched/sched.h>
 
+u8 irq_handle_type[MAX_IRQ_NUM];
+
 void exception_init_per_cpu(void)
 {
+	/**
+	 * Lab4
+	 *
+	 * Uncomment the timer_init() when you are handling preemptive
+	 * shceduling
+	 */
+	// timer_init();
+
 	/**
 	 * Lab3: Your code here
 	 * Setup the exception vector with the asm function written in exception.S
@@ -31,10 +44,16 @@ void exception_init_per_cpu(void)
 void exception_init(void)
 {
 	exception_init_per_cpu();
+	memset(irq_handle_type, HANDLE_KERNEL, MAX_IRQ_NUM);
 }
 
 void handle_entry_c(int type, u64 esr, u64 address)
 {
+	/** 
+	 * Lab4
+	 * Acquire the big kernel lock, if the exception is from kernel
+	 */
+
 	/* ec: exception class */
 	u32 esr_ec = GET_ESR_EL1_EC(esr);
 

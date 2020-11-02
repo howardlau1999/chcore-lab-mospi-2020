@@ -12,6 +12,7 @@
 
 #include <common/kmalloc.h>
 #include <common/kprint.h>
+#include <common/smp.h>
 #include <common/util.h>
 #include <common/registers.h>
 #include <process/thread.h>
@@ -59,6 +60,17 @@ void init_thread_ctx(struct thread *thread, u64 stack, u64 func, u32 prio,
 
 	/* Set thread type */
 	thread->thread_ctx->type = type;
+
+	/* Set the priority and state of the thread */
+	thread->thread_ctx->prio = prio;
+	thread->thread_ctx->state = TS_INIT;
+
+	/* Set the cpuid and affinity */
+	thread->thread_ctx->affinity = aff;
+
+	/* Set the budget of the thread */
+	thread->thread_ctx->sc = kmalloc(sizeof(sched_cont_t));
+	thread->thread_ctx->sc->budget = DEFAULT_BUDGET;
 }
 
 u64 arch_get_thread_stack(struct thread *thread)

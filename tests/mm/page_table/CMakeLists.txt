@@ -14,6 +14,7 @@ include_directories(
     ../../../kernel/mm
     ../../../kernel/
     ../../include
+    ../../../
 )
 
 add_custom_target(

@@ -89,7 +89,7 @@ void *obj_alloc(u64 type, u64 size)
 	struct object *object;
 
 	// opaque is u64 so sizeof(*object) is 8-byte aligned.
-	// Thus the address of object-defined data is always 8-byte aligned.
+	//      Thus the address of object-defined data is always 8-byte aligned.
 	total_size = sizeof(*object) + size;
 	object = kmalloc(total_size);
 	if (!object)

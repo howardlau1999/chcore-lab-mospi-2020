@@ -16,9 +16,11 @@
 #include <mm/vmspace.h>
 #include <sched/sched.h>
 #include <process/process.h>
+#include <common/smp.h>
+#include <ipc/ipc.h>
 
 extern struct thread *current_threads[PLAT_CPU_NUM];
-#define current_thread (current_threads[0])
+#define current_thread (current_threads[smp_get_cpu_id()])
 #define DEFAULT_KERNEL_STACK_SZ		(0x1000)
 
 /* Arguments for the inital thread */
@@ -28,10 +30,15 @@ extern struct thread *current_threads[PLAT_CPU_NUM];
 
 struct thread {
 	struct list_head node;	// link threads in a same process
+	struct list_head ready_queue_node;	// link threads in a ready queue
+	struct list_head notification_queue_node;	// link threads in a notification waiting queue
 	struct thread_ctx *thread_ctx;	// thread control block
 	struct vmspace *vmspace;	// memory mapping
 
 	struct process *process;
+
+	struct ipc_connection *active_conn;
+	struct server_ipc_config *server_ipc_config;
 };
 
 void switch_thread_vmspace_to(struct thread *);

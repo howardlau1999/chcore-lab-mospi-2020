@@ -256,12 +256,12 @@ void process_create_root(char *bin_name)
 	thread_cap = thread_create_main(root_process, ROOT_THREAD_STACK_BASE,
 					ROOT_THREAD_STACK_SIZE,
 					ROOT_THREAD_PRIO, TYPE_ROOT,
-					0, binary, bin_name);
+					smp_get_cpu_id(), binary, bin_name);
 
 	root_thread = obj_get(root_process, thread_cap, TYPE_THREAD);
 	/* Enqueue: put init thread into the ready queue */
+	BUG_ON(sched_enqueue(root_thread));
 	obj_put(root_thread);
-	current_thread = root_thread;
 }
 
 /* syscalls */

@@ -20,6 +20,28 @@ void sys_map_pmo(void);
 void sys_handle_brk(void);
 /* lab3 syscalls finished */
 
+void sys_yield(void);
+void sys_create_device_pmo(void);
+void sys_create_thread(void);
+void sys_create_process(void);
+void sys_cap_copy_to(void);
+void sys_cap_copy_from(void);
+void sys_unmap_pmo(void);
+void sys_set_affinity(void);
+void sys_get_affinity(void);
+
+void sys_create_pmos(void);
+void sys_map_pmos(void);
+void sys_write_pmo(void);
+void sys_transfer_caps(void);
+void sys_read_pmo(void);
+
+void sys_register_server(void);
+void sys_register_client(void);
+void sys_ipc_call(void);
+void sys_ipc_reg_call(void);
+void sys_ipc_return(void);
+
 #define SYS_putc				0
 #define SYS_getc				1
 #define SYS_yield				2

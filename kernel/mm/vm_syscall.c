@@ -48,7 +48,6 @@ int sys_create_pmo(u64 size, u64 type)
 	int cap, r;
 	struct pmobject *pmo;
 
-	kinfo("sys_create_pmo called\n");
 	BUG_ON(size == 0);
 	pmo = obj_alloc(TYPE_PMO, sizeof(*pmo));
 	if (!pmo) {
@@ -128,6 +127,7 @@ static int read_write_pmo(u64 pmo_cap, u64 offset, u64 user_buf,
 		r = -ECAPBILITY;
 		goto out_fail;
 	}
+
 	/* we only allow writing PMO_DATA now. */
 	if (pmo->type != PMO_DATA) {
 		r = -EINVAL;
@@ -180,7 +180,6 @@ int sys_map_pmo(u64 target_process_cap, u64 pmo_cap, u64 addr, u64 perm)
 	struct process *target_process;
 	int r;
 
-	kinfo("sys_map_pmo called\n");
 	pmo = obj_get(current_process, pmo_cap, TYPE_PMO);
 	if (!pmo) {
 		r = -ECAPBILITY;
@@ -295,6 +294,7 @@ int sys_unmap_pmo(u64 target_process_cap, u64 pmo_cap, u64 addr)
 		ret = -EPERM;
 		goto fail2;
 	}
+
 	ret = vmspace_unmap_range(vmspace, addr, pmo->size);
 	if (ret != 0)
 		ret = -EPERM;

@@ -17,6 +17,8 @@
 
 .extern syscall_table
 .extern hook_syscall
+.extern lock_kernel
+.extern unlock_kernel
 
 .macro	exception_entry	label
 	/* Each entry should be 0x80 aligned */
@@ -30,7 +32,7 @@
 	mrs	x1, esr_el1
 	mrs	x2, elr_el1
 	bl	handle_entry_c
-	exception_exit
+	exception_return
 .endm
 
 /* See more details about the bias in registers.h */
@@ -81,6 +83,15 @@
 	ldp	x28, x29, [sp, #16 * 14]
 	add	sp, sp, #ARCH_EXEC_CONT_SIZE
 	eret
+.endm
+
+
+/** 	
+ *  Lab4 
+ * 	unlock the big kernel lock before returning to the user mode
+ */
+.macro	exception_return
+	exception_exit
 .endm
 
 
@@ -153,9 +164,12 @@ sync_el0_64:
 	mrs	x1, esr_el1
 	mrs	x2, elr_el1
 	bl	handle_entry_c
-	exception_exit
+	exception_return
 
 el0_syscall:
+	/* 	Lab4 
+	* 	Acquire the big kernel lock for syscall
+	*/
 	sub	sp, sp, #16 * 8
 	stp	x0, x1, [sp, #16 * 0]
 	stp	x2, x3, [sp, #16 * 1]
@@ -165,6 +179,9 @@ el0_syscall:
 	stp	x10, x11, [sp, #16 * 5]
 	stp	x12, x13, [sp, #16 * 6]
 	stp	x14, x15, [sp, #16 * 7]
+
+	bl lock_kernel
+
 	ldp	x0, x1, [sp, #16 * 0]
 	ldp	x2, x3, [sp, #16 * 1]
 	ldp	x4, x5, [sp, #16 * 2]
@@ -183,13 +200,21 @@ el0_syscall:
 	/* Ret from syscall */
 	// bl	disable_irq
 	str	x0, [sp] /* set the return value of the syscall */
-	exception_exit
+	exception_return
 	
 irq_el1h:
-	handle_entry	0, IRQ_EL1h
+	exception_enter
+	mov	x0, IRQ_EL1h
+	bl	handle_irq
+	/* should nerver reach here */
+	b .
 
 irq_el0_64:
-	handle_entry	0,  IRQ_EL0_64
+	exception_enter
+	mov	x0, IRQ_EL0_64
+	bl	handle_irq
+	/* should nerver reach here */
+	b .
 
 fiq_el0_64:
 	handle_entry	0, FIQ_EL0_64
@@ -212,5 +237,5 @@ error_el0_32:
 /* void eret_to_thread(u64 sp) */
 BEGIN_FUNC(eret_to_thread)
 	mov	sp, x0
-	exception_exit
+	exception_return
 END_FUNC(eret_to_thread)

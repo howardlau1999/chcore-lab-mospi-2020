@@ -21,6 +21,7 @@
 #include <process/thread.h>
 #include <sched/context.h>
 #include <common/registers.h>
+#include <common/smp.h>
 #include <common/cpio.h>
 #include <exception/exception.h>
 
@@ -61,15 +62,24 @@ void thread_deinit(void *thread_ptr)
 
 	thread = thread_ptr;
 
-	object = container_of(thread, struct object, opaque);
-	object->refcount = 1;
+	switch (thread->thread_ctx->state) {
+	case TS_RUNNING:
+		object = container_of(thread, struct object, opaque);
+		object->refcount = 1;
+		thread->thread_ctx->state = TS_EXITING;
 
-	process = thread->process;
-	list_del(&thread->node);
-	if (list_empty(&process->thread_list))
-		exit_process = true;
+		break;
+	case TS_READY:
+		sched_dequeue(thread);
+		/* fall through */
+	default:
+		process = thread->process;
+		list_del(&thread->node);
+		if (list_empty(&process->thread_list))
+			exit_process = true;
 
-	destroy_thread_ctx(thread);
+		destroy_thread_ctx(thread);
+	}
 
 	if (exit_process)
 		process_exit(process);
@@ -104,6 +114,10 @@ int thread_create(struct process *process, u64 stack, u64 pc, u64 arg, u32 prio,
 	}
 	/* ret is thread_cap in the current_process */
 	cap = cap_copy(process, current_process, cap, 0, 0);
+	if (type == TYPE_USER) {
+		ret = sched_enqueue(thread);
+		BUG_ON(ret);
+	}
 
 	/* TYPE_KERNEL => do nothing */
 	return cap;
@@ -313,14 +327,80 @@ void switch_thread_vmspace_to(struct thread *thread)
 /* Exit the current running thread */
 void sys_exit(int ret)
 {
-	int cpuid = 0;
+	int cpuid = smp_get_cpu_id();
 	struct thread *target = current_threads[cpuid];
 
-	kinfo("sys_exit with value %d\n", ret);
+	// kinfo("sys_exit with value %d\n", ret);
 	/* Set thread state */
+	target->thread_ctx->state = TS_EXIT;
 	obj_free(target);
 
 	/* Set current running thread to NULL */
 	current_threads[cpuid] = NULL;
-	break_point();
+	/* Reschedule */
+	cur_sched_ops->sched();
+	eret_to_thread(switch_context());
+}
+
+/*
+ * create a thread in some process
+ * return the thread_cap in the target process
+ */
+int sys_create_thread(u64 process_cap, u64 stack, u64 pc, u64 arg, u32 prio,
+		      s32 aff)
+{
+	struct process *process =
+	    obj_get(current_process, process_cap, TYPE_PROCESS);
+	int thread_cap =
+	    thread_create(process, stack, pc, arg, prio, TYPE_USER, aff);
+
+	obj_put(process);
+	return thread_cap;
+}
+
+/*
+ * Lab4
+ * Finish the sys_set_affinity
+ * You do not need to schedule out current thread immediately,
+ * as it is the duty of sys_yield()
+ */
+int sys_set_affinity(u64 thread_cap, s32 aff)
+{
+	struct thread *thread = NULL;
+	int cpuid = smp_get_cpu_id(), ret = 0;
+
+	/* currently, we use -1 to represent the current thread */
+	if (thread_cap == -1) {
+		thread = current_threads[cpuid];
+		BUG_ON(!thread);
+	} else {
+		thread = obj_get(current_process, thread_cap, TYPE_THREAD);
+	}
+
+	/*
+	 * Lab4
+	 * Finish the sys_set_affinity
+	 */
+	return -1;
+}
+
+int sys_get_affinity(u64 thread_cap)
+{
+	struct thread *thread = NULL;
+	int cpuid = smp_get_cpu_id();
+	s32 aff = 0;
+
+	/* currently, we use -1 to represent the current thread */
+	if (thread_cap == -1) {
+		thread = current_threads[cpuid];
+		BUG_ON(!thread);
+	} else {
+		thread = obj_get(current_process, thread_cap, TYPE_THREAD);
+	}
+
+	/*
+	 * Lab4
+	 * Finish the sys_get_affinity
+	 */
+	return -1;
 }

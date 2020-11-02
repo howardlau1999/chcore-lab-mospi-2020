@@ -46,6 +46,8 @@ set(KERNEL_SYSCALL_PATH     "${KERNEL_PATH}/syscall")
 set(KERNEL_EXCEPTION_PATH   "${KERNEL_PATH}/exception")
 set(KERNEL_PROCESS_PATH     "${KERNEL_PATH}/process")
 set(KERNEL_SCHED_PATH       "${KERNEL_PATH}/sched")
+set(KERNEL_IPC_PATH         "${KERNEL_PATH}/ipc")
+set(KERNEL_TESTS_PATH       "${KERNEL_PATH}/tests")
 
 include_directories(".")
 include_directories("${KERNEL_PATH}")
@@ -56,6 +58,8 @@ add_subdirectory("${KERNEL_PROCESS_PATH}")
 add_subdirectory("${KERNEL_SYSCALL_PATH}")
 add_subdirectory("${KERNEL_EXCEPTION_PATH}")
 add_subdirectory("${KERNEL_SCHED_PATH}")
+add_subdirectory("${KERNEL_IPC_PATH}")
+add_subdirectory("${KERNEL_TESTS_PATH}")
 
 set(BINARY_KERNEL_IMG_PATH "CMakeFiles/kernel.img.dir")
 set(init_object
@@ -79,6 +83,8 @@ add_executable(kernel.img ${files}
     $<TARGET_OBJECTS:${PROJECT_NAME}-syscall>
     $<TARGET_OBJECTS:${PROJECT_NAME}-sched>
     $<TARGET_OBJECTS:${PROJECT_NAME}-exception>
+    $<TARGET_OBJECTS:${PROJECT_NAME}-ipc>
+    $<TARGET_OBJECTS:${PROJECT_NAME}-tests>
     ${USER_PATH}/binary_include.S
 )
 
