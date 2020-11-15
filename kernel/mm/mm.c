@@ -51,7 +51,29 @@ unsigned long get_ttbr1(void)
 void map_kernel_space(vaddr_t va, paddr_t pa, size_t len)
 {
 	// <lab2>
+	#define IS_VALID (1UL << 0)
+	#define UXN	       (0x1UL << 54)
+	#define ACCESSED       (0x1UL << 10)
+	#define INNER_SHARABLE (0x3UL << 8)
+	#define NORMAL_MEMORY  (0x4UL << 2)
 
+	#define GET_L0_INDEX(x) (((x) >> (12 + 9 + 9 + 9)) & 0x1ff)
+	#define GET_L1_INDEX(x) (((x) >> (12 + 9 + 9)) & 0x1ff)
+	#define GET_L2_INDEX(x) (((x) >> (12 + 9)) & 0x1ff)
+	u64 *pgd = get_ttbr1() + KBASE;
+	len = ROUND_UP(len, (PAGE_SIZE << 9));
+	for (size_t mapped = 0; mapped < len; mapped += (PAGE_SIZE << 9)) {
+		u32 l0_idx = GET_L0_INDEX(va + mapped);
+		u64 *l1_tbl = (pgd[l0_idx] & ~0xFF) + KBASE;
+		u32 l1_idx = GET_L1_INDEX(va + mapped);
+		u64 *l2_tbl = (l1_tbl[l1_idx] & ~0xFF) + KBASE;
+		u32 l2_idx = GET_L2_INDEX(va + mapped);
+		l2_tbl[l2_idx] = (pa + mapped) | UXN	/* Unprivileged execute never */
+		    | ACCESSED	/* Set access flag */
+		    | INNER_SHARABLE	/* Sharebility */
+		    | NORMAL_MEMORY	/* Normal memory */
+		    | IS_VALID;
+	}
 	// </lab2>
 }
 
