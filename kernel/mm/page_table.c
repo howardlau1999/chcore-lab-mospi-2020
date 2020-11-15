@@ -162,6 +162,45 @@ static int get_next_ptp(ptp_t * cur_ptp, u32 level, vaddr_t va,
 int query_in_pgtbl(vaddr_t * pgtbl, vaddr_t va, paddr_t * pa, pte_t ** entry)
 {
 	// <lab2>
+	ptp_t *cur_ptp = pgtbl;
+	ptp_t *next_ptp = NULL;
+	pte_t *pte = NULL;
+	int ret = 0;
+
+	// L0 Table
+	ret = get_next_ptp(cur_ptp, 0, va, &cur_ptp, &pte, false);
+	if (ret < 0) {
+		return ret;
+	}
+
+	// L1 Table
+	ret = get_next_ptp(cur_ptp, 1, va, &cur_ptp, &pte, false);
+	if (ret < 0) {
+		return ret;
+	} else if (ret == BLOCK_PTP) {
+		*pa = (pte->l1_block.pfn) << L1_INDEX_SHIFT;
+		*pa |= GET_VA_OFFSET_L1(va);
+		return 0;
+	}
+
+	// L2 Table
+	ret = get_next_ptp(cur_ptp, 2, va, &cur_ptp, &pte, false);
+	if (ret < 0) {
+		return ret;
+	} else if (ret == BLOCK_PTP) {
+		*pa = (pte->l2_block.pfn) << L2_INDEX_SHIFT;
+		*pa |= GET_VA_OFFSET_L2(va);
+		return 0;
+	}
+
+	// L3 Table
+	ret = get_next_ptp(cur_ptp, 3, va, &cur_ptp, &pte, false);
+	if (ret < 0) {
+		return ret;
+	}
+
+	*pa = (pte->l3_page.pfn) << L3_INDEX_SHIFT;
+	*pa |= GET_VA_OFFSET_L3(va);
 
 	// </lab2>
 	return 0;
@@ -187,6 +226,26 @@ int map_range_in_pgtbl(vaddr_t * pgtbl, vaddr_t va, paddr_t pa,
 {
 	// <lab2>
 
+	// Align len to 4K
+	len = ROUND_UP(len, PAGE_SIZE);
+	for (vaddr_t va_end = va + len; va < va_end; pa += PAGE_SIZE, va += PAGE_SIZE) {
+		ptp_t *cur_ptp = pgtbl;
+		pte_t *pte = NULL;
+		for (u32 level = 0; level <= 2; ++level) {
+			int ret = get_next_ptp(cur_ptp, level, va, &cur_ptp, &pte, true);
+			if (ret < 0) {
+				return ret;
+			}
+		}
+		// cur_ptp now points to L3 page table
+		pte = &(cur_ptp->ent[GET_L3_INDEX(va)]);
+		pte->pte = 0;
+		pte->l3_page.is_valid = 1;
+		pte->l3_page.is_page = 1;
+		pte->l3_page.pfn = (pa) >> PAGE_SHIFT;
+		set_pte_flags(pte, flags, USER_PTE);
+	}
+	flush_tlb();
 	// </lab2>
 	return 0;
 }
@@ -207,7 +266,20 @@ int map_range_in_pgtbl(vaddr_t * pgtbl, vaddr_t va, paddr_t pa,
 int unmap_range_in_pgtbl(vaddr_t * pgtbl, vaddr_t va, size_t len)
 {
 	// <lab2>
-
+	// TODO: recycle the page table items
+	len = ROUND_UP(len, PAGE_SIZE);
+	for (vaddr_t va_end = va + len; va < va_end; va += PAGE_SIZE) {
+		ptp_t *cur_ptp = pgtbl;
+		pte_t *pte = NULL;
+		for (u32 level = 0; level <= 3; ++level) {
+			int ret = get_next_ptp(cur_ptp, level, va, &cur_ptp, &pte, false);
+			if (ret < 0) {
+				continue;
+			}
+		}
+		pte->pte = 0;
+	}
+	flush_tlb();
 	// </lab2>
 	return 0;
 }
