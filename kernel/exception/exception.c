@@ -32,7 +32,7 @@ void exception_init_per_cpu(void)
 	 * Uncomment the timer_init() when you are handling preemptive
 	 * shceduling
 	 */
-	// timer_init();
+	timer_init();
 
 	/**
 	 * Lab3: Your code here

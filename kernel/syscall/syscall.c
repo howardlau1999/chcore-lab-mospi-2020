@@ -45,7 +45,7 @@ u32 sys_getc(void)
  */
 u32 sys_get_cpu_id(void)
 {
-	return -1;
+	return smp_get_cpu_id();
 }
 
 /*

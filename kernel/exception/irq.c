@@ -49,6 +49,9 @@ void handle_irq(int type)
 	 * Lab4
 	 * Do you miss something?
 	 */
+	sched_handle_timer_irq();
+	sched();
+	eret_to_thread(switch_context());
 }
 
 void plat_handle_irq(void)
