@@ -91,6 +91,7 @@
  * 	unlock the big kernel lock before returning to the user mode
  */
 .macro	exception_return
+	bl	unlock_kernel
 	exception_exit
 .endm
 
