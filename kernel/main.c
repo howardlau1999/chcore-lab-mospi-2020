@@ -112,7 +112,7 @@ void secondary_start(void)
 	 * Inform the BSP at last to start cpu one by one
 	 * Hints: use cpu_status
 	*/
-
+	cpu_status[smp_get_cpu_id()] = cpu_run;
 #ifndef TEST
 	run_test(false);
 #endif
