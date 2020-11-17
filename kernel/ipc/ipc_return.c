@@ -40,7 +40,7 @@ static int thread_migrate_to_client(struct ipc_connection *conn, u64 ret_value)
 	 * Lab4
 	 * The return value returned by server thread;
 	 */
-	arch_set_thread_return(source, LAB4_IPC_BLANK);
+	arch_set_thread_return(source, ret_value);
 	/**
 	 * Switch to the client
 	 */
