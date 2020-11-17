@@ -223,7 +223,7 @@ int tfs_namex(struct inode **dirat, const char **name, int mkdir_p)
 		}
 		buff[i] = (*name)[i];
 	}
-	u64 key = hash_chars(buff, i);
+
 	dent = tfs_lookup(*dirat, buff, i);
 	if (!dent) {
 		if (mkdir_p) {

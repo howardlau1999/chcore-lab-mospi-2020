@@ -14,7 +14,17 @@ static void fs_dispatch(ipc_msg_t * ipc_msg)
 		    ipc_get_msg_data(ipc_msg);
 		switch (fr->req) {
 		case FS_REQ_SCAN:{
+				if (ipc_msg->cap_slot_number != 1) {
+					ret = -EINVAL;
+					break;
+				}
+				int cap = ipc_get_msg_cap(ipc_msg, 0);
+				ret = usys_map_pmo(SELF_CAP, cap, fr->buff, VM_READ | VM_WRITE);
+				if (ret < 0) {
+					break;
+				}
 				ret = fs_server_scan(fr->path, fr->offset, fr->buff, fr->count);
+				usys_unmap_pmo(SELF_CAP, cap, fr->buff);
 				break;
 			}
 		case FS_REQ_MKDIR:
@@ -40,11 +50,31 @@ static void fs_dispatch(ipc_msg_t * ipc_msg)
 			usys_exit(-1);
 			break;
 		case FS_REQ_WRITE:{
+				if (ipc_msg->cap_slot_number != 1) {
+					ret = -EINVAL;
+					break;
+				}
+				int cap = ipc_get_msg_cap(ipc_msg, 0);
+				ret = usys_map_pmo(SELF_CAP, cap, fr->buff, VM_READ | VM_WRITE);
+				if (ret < 0) {
+					break;
+				}
 				ret = fs_server_write(fr->path, fr->offset, fr->buff, fr->count);
+				usys_unmap_pmo(SELF_CAP, cap, fr->buff);
 				break;
 			}
 		case FS_REQ_READ:{
+				if (ipc_msg->cap_slot_number != 1) {
+					ret = -EINVAL;
+					break;
+				}
+				int cap = ipc_get_msg_cap(ipc_msg, 0);
+				ret = usys_map_pmo(SELF_CAP, cap, fr->buff, VM_READ | VM_WRITE);
+				if (ret < 0) {
+					break;
+				}
 				ret = fs_server_read(fr->path, fr->offset, fr->buff, fr->count);
+				usys_unmap_pmo(SELF_CAP, cap, fr->buff);
 				break;
 			}
 		case FS_REQ_GET_SIZE:{
@@ -62,7 +92,6 @@ static void fs_dispatch(ipc_msg_t * ipc_msg)
 		printf("TMPFS: no operation num\n");
 		usys_exit(-1);
 	}
-
 	usys_ipc_return(ret);
 }
 
