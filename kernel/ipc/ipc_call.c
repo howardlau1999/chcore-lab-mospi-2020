@@ -114,19 +114,19 @@ static u64 thread_migrate_to_server(struct ipc_connection *conn, u64 arg)
 	 * This command set the sp register, read the file to find which field
 	 * of the ipc_connection stores the stack of the server thread?
 	 * */
-	arch_set_thread_stack(target, LAB4_IPC_BLANK);
+	arch_set_thread_stack(target, conn->server_stack_top);
 	/**
 	 * Lab4
 	 * This command set the ip register, read the file to find which field
 	 * of the ipc_connection stores the instruction to be called when switch
 	 * to the server?
 	 * */
-	arch_set_thread_next_ip(target, LAB4_IPC_BLANK);
+	arch_set_thread_next_ip(target, conn->target->server_ipc_config->callback);
 	/**
 	 * Lab4
 	 * The argument set by sys_ipc_call;
 	 */
-	arch_set_thread_arg(target, LAB4_IPC_BLANK);
+	arch_set_thread_arg(target, arg);
 
 	/**
 	 * Passing the scheduling context of the current thread to thread of
@@ -169,6 +169,9 @@ u64 sys_ipc_call(u32 conn_cap, ipc_msg_t * ipc_msg)
 	 * Here, you need to transfer all the capbiliies of client thread to
 	 * capbilities in server thread in the ipc_msg.
 	 */
+	r = ipc_send_cap(conn, ipc_msg);
+	if (r < 0)
+		goto out_obj_put;
 
 	r = copy_to_user((char *)&ipc_msg->server_conn_cap,
 			 (char *)&conn->server_conn_cap, sizeof(u64));
@@ -180,7 +183,7 @@ u64 sys_ipc_call(u32 conn_cap, ipc_msg_t * ipc_msg)
 	 * The arg is actually the 64-bit arg for ipc_dispatcher
 	 * Then what value should the arg be?
 	 * */
-	arg = LAB4_IPC_BLANK;
+	arg = conn->buf.server_user_addr;
 	thread_migrate_to_server(conn, arg);
 
 	BUG("This function should never\n");
@@ -196,5 +199,22 @@ u64 sys_ipc_call(u32 conn_cap, ipc_msg_t * ipc_msg)
  * */
 u64 sys_ipc_reg_call(u32 conn_cap, u64 arg0)
 {
-	return -1;
+	struct ipc_connection *conn = NULL;
+	u64 arg;
+	int r;
+
+	conn = obj_get(current_thread->process, conn_cap, TYPE_CONNECTION);
+	if (!conn) {
+		r = -ECAPBILITY;
+		goto out_fail;
+	}
+
+	arg = arg0;
+	thread_migrate_to_server(conn, arg);
+
+	BUG("This function should never\n");
+ out_obj_put:
+	obj_put(conn);
+ out_fail:
+	return r;;
 }

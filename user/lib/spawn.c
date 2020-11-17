@@ -259,8 +259,8 @@ int launch_process_with_pmos_caps(struct user_elf *user_elf,
 		 * process.
 		 *  You do not need to modify code in this scope
 		 */
-		pmo_requests[0].size = LAB4_SPAWN_BLANK;
-		pmo_requests[0].type = LAB4_SPAWN_BLANK;
+		pmo_requests[0].size = MAIN_THREAD_STACK_SIZE;
+		pmo_requests[0].type = PMO_DATA;
 
 		ret = usys_create_pmos((void *)pmo_requests, 1);
 		if (ret != 0) {
@@ -334,8 +334,8 @@ int launch_process_with_pmos_caps(struct user_elf *user_elf,
 		 * stack_offset is the offset from main thread's stack base to
 		 * that address.
 		 */
-		stack_top = LAB4_SPAWN_BLANK;
-		stack_offset = LAB4_SPAWN_BLANK;
+		stack_top = MAIN_THREAD_STACK_BASE + MAIN_THREAD_STACK_SIZE;
+		stack_offset = MAIN_THREAD_STACK_SIZE - PAGE_SIZE;
 
 		/* Construct the parameters on the top page of the stack */
 		construct_init_env(init_env, stack_top, &user_elf->elf_meta,
@@ -364,9 +364,9 @@ int launch_process_with_pmos_caps(struct user_elf *user_elf,
 		 *  map the the main thread stack's pmo in the new process.
 		 *  Both VM_READ and VM_WRITE permission should be set.
 		 */
-		pmo_map_requests[0].pmo_cap = LAB4_SPAWN_BLANK;
-		pmo_map_requests[0].addr = LAB4_SPAWN_BLANK;
-		pmo_map_requests[0].perm = LAB4_SPAWN_BLANK;
+		pmo_map_requests[0].pmo_cap = main_stack_cap;
+		pmo_map_requests[0].addr = MAIN_THREAD_STACK_BASE;
+		pmo_map_requests[0].perm = VM_READ | VM_WRITE;
 
 		ret =
 		    usys_map_pmos(new_process_cap, (void *)pmo_map_requests, 1);
@@ -384,7 +384,7 @@ int launch_process_with_pmos_caps(struct user_elf *user_elf,
 		 * create main thread in the new process.
 		 * Please fill the stack_va!
 		 */
-		stack_va = LAB4_SPAWN_BLANK;
+		stack_va = MAIN_THREAD_STACK_BASE + MAIN_THREAD_STACK_SIZE - PAGE_SIZE;
 		main_thread_cap =
 		    usys_create_thread(new_process_cap, stack_va, pc,
 				       (u64) NULL, MAIN_THREAD_PRIO, aff);
@@ -397,6 +397,13 @@ int launch_process_with_pmos_caps(struct user_elf *user_elf,
 
 	{
 		/* Step C: Output the child process & thread capabilities */
+		if (child_process_cap != NULL) {
+			*child_process_cap = new_process_cap;
+		}
+
+		if (child_main_thread_cap != NULL) {
+			*child_main_thread_cap = main_thread_cap;
+		}
 	}
 
 	return 0;

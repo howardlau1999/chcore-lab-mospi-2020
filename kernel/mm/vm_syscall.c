@@ -348,10 +348,31 @@ u64 sys_handle_brk(u64 addr)
 	 *
 	 */
 
+	if (addr == 0) {
+		pmo = obj_alloc(TYPE_PMO, sizeof(*pmo));
+		if (pmo == NULL) {
+			retval = vmspace->user_current_heap;
+			goto out_obj_put;
+		}
+		pmo_init(pmo, PMO_ANONYM, 0, 0);
+		vmspace->heap_vmr = init_heap_vmr(vmspace, vmspace->user_current_heap, pmo);
+		retval = vmspace->user_current_heap;
+		goto out_obj_put;
+	} else if (addr > vmspace->user_current_heap) {
+		len = addr - vmspace->user_current_heap;
+		vmspace->heap_vmr->size += len;
+		vmspace->heap_vmr->pmo->size += len;
+		retval = addr;
+		goto out_obj_put;
+	} else {
+		retval = -EINVAL;
+		goto out_obj_put;
+	}
 	/*
 	 * return origin heap addr on failure;
 	 * return new heap addr on success.
 	 */
+out_obj_put:
 	obj_put(vmspace);
 	return retval;
 }
