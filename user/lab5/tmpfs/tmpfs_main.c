@@ -14,7 +14,7 @@ static void fs_dispatch(ipc_msg_t * ipc_msg)
 		    ipc_get_msg_data(ipc_msg);
 		switch (fr->req) {
 		case FS_REQ_SCAN:{
-				// TODO: you code here
+				ret = fs_server_scan(fr->path, fr->offset, fr->buff, fr->count);
 				break;
 			}
 		case FS_REQ_MKDIR:
@@ -40,11 +40,11 @@ static void fs_dispatch(ipc_msg_t * ipc_msg)
 			usys_exit(-1);
 			break;
 		case FS_REQ_WRITE:{
-				// TODO: you code here
+				ret = fs_server_write(fr->path, fr->offset, fr->buff, fr->count);
 				break;
 			}
 		case FS_REQ_READ:{
-				// TODO: you code here
+				ret = fs_server_read(fr->path, fr->offset, fr->buff, fr->count);
 				break;
 			}
 		case FS_REQ_GET_SIZE:{
