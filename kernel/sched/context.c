@@ -57,7 +57,10 @@ void init_thread_ctx(struct thread *thread, u64 stack, u64 func, u32 prio,
 	 */
 
 	/* Fill the context of the thread */
-
+	
+	arch_set_thread_stack(thread, stack);
+	arch_set_thread_next_ip(thread, func);
+	thread->thread_ctx->ec.reg[SPSR_EL1] = SPSR_EL1_EL0t;
 	/* Set thread type */
 	thread->thread_ctx->type = type;
 
