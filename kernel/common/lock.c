@@ -28,7 +28,6 @@ int lock_init(struct lock *lock)
 	lock->next = 0;
 	return 0;
 }
-// Refer to https://winddoing.github.io/post/50889.html
 /**
  * Lock the ticket lock
  * This function will block until the lock is held
@@ -91,9 +90,7 @@ void unlock(struct lock *lock)
 	 * Unlock the ticket lock here
 	 * Your code should be no more than 5 lines
 	*/
-	if (is_locked(lock)) {
-		++lock->owner;
-	}
+	++lock->owner;
 }
 
 /** 
