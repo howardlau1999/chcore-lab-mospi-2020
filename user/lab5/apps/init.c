@@ -53,8 +53,35 @@ char *readline(const char *prompt)
 		if (c < 0)
 			return NULL;
 		// TODO: your code here
-
+		usys_putc(c);
+		if (c == '\b') {
+			// Backspace
+			if (i > 0) {
+				--i;
+				usys_putc(' ');
+				usys_putc('\b');
+			}
+			continue;
+		} else if (c == 127) {
+			// Delelte
+			if (i > 0) {
+				--i;
+				usys_putc('\b');
+				usys_putc(' ');
+				usys_putc('\b');
+			}
+			continue;
+		} else if (c == '\r') {
+			// Return
+			usys_putc('\n');
+			break;
+		}
+		buf[i++] = c;
+		if (i == BUFLEN - 1) {
+			break;
+		}
 	}
+	buf[i] = '\0';
 	return buf;
 }
 
@@ -79,7 +106,57 @@ int do_top()
 
 void fs_scan(char *path)
 {
-	// TODO: your code here
+	char str[256];
+	int start;
+	ipc_msg_t *ipc_msg;
+	int ret;
+	struct fs_request fr;
+	void *vp;
+	struct dirent *p;
+
+	/* IPC send cap */
+	ipc_msg = ipc_create_msg(tmpfs_ipc_struct,
+				 sizeof(struct fs_request), 1);
+
+	fr.req = FS_REQ_SCAN;
+	fr.buff = TMPFS_SCAN_BUF_VADDR;
+	fr.count = PAGE_SIZE;
+	if (strlen(path) == 0) {
+		strcpy((void *) fr.path, "/");
+	} else if (*path != '/') {
+		fr.path[0] = '/';
+		strcpy((void *) (fr.path + 1), path);
+	} else {
+		strcpy((void *) fr.path, path);
+	}
+		
+	int i;
+	start = 0;
+	do {
+		{
+			fr.offset = start;
+			ipc_set_msg_cap(ipc_msg, 0, tmpfs_scan_pmo_cap);
+			ipc_set_msg_data(ipc_msg, (char *)&fr, 0, sizeof(struct fs_request));
+			ret = ipc_call(tmpfs_ipc_struct, ipc_msg);
+			if (ret == -ENOTDIR && *path != '.') {
+				printf("%s\n", path);
+				break;
+			}
+		}
+		vp = TMPFS_SCAN_BUF_VADDR;
+		start += ret;
+		for (i = 0; i < ret; i++) {
+			p = vp;
+			strcpy(str, p->d_name);
+			if (str[0] != '.') {
+				printf("%s\n", str);
+			}
+			vp += p->d_reclen;
+		}
+	} while (ret > 0);
+
+	ipc_destroy_msg(ipc_msg);
+	return ret;
 }
 
 int do_ls(char *cmdline)
@@ -114,7 +191,7 @@ int do_echo(char *cmdline)
 	cmdline += 4;
 	while (*cmdline == ' ')
 		cmdline++;
-	printf("%s", cmdline);
+	printf("%s\n", cmdline);
 	return 0;
 }
 

@@ -9,6 +9,7 @@ char getch()
 {
 	char c;
 	// TODO: your code here
+	c = usys_getc();
 
 	return c;
 }
