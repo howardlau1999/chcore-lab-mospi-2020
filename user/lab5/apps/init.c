@@ -24,7 +24,80 @@ static int do_complement(char *buf, char *complement, int complement_time)
 {
 	int r = -1;
 	// TODO: your code here
+	char str[256];
+	int start;
+	ipc_msg_t *ipc_msg;
+	int ret;
+	struct fs_request fr;
+	void *vp;
+	struct dirent *p;
 
+	/* IPC send cap */
+	ipc_msg = ipc_create_msg(tmpfs_ipc_struct,
+				 sizeof(struct fs_request), 1);
+
+	fr.req = FS_REQ_SCAN;
+	fr.buff = TMPFS_SCAN_BUF_VADDR;
+	fr.count = PAGE_SIZE;
+	// Find the last slash and truncate to that position
+	char leaf_prefix[BUFLEN] = {0};
+	char path[BUFLEN] = {0};
+	int leaf_prefix_len;
+	int len = strlen(buf);
+	int slash_idx;
+	int found_slash = 0;
+	for (slash_idx = len - 1; slash_idx > 0; --slash_idx) {
+		if (buf[slash_idx] == '/') {
+			found_slash = 1;
+			break;
+		}
+	}
+
+	leaf_prefix_len = len - slash_idx - found_slash;
+	strcpy(leaf_prefix, buf + slash_idx + found_slash);
+	strcpy(path, buf);
+	path[slash_idx] = '\0';
+	
+
+	if (strlen(path) == 0) {
+		strcpy((void *) fr.path, "/");
+	} else if (*path != '/') {
+		fr.path[0] = '/';
+		strcpy((void *) (fr.path + 1), path);
+	} else {
+		strcpy((void *) fr.path, path);
+	}
+	int i;
+	start = 0;
+	do {
+		{
+			fr.offset = start;
+			ipc_set_msg_cap(ipc_msg, 0, tmpfs_scan_pmo_cap);
+			ipc_set_msg_data(ipc_msg, (char *)&fr, 0, sizeof(struct fs_request));
+			ret = ipc_call(tmpfs_ipc_struct, ipc_msg);
+			if (ret == -ENOTDIR && *path != '.') {
+				break;
+			}
+		}
+		vp = TMPFS_SCAN_BUF_VADDR;
+		start += ret;
+		for (i = 0; i < ret; i++) {
+			p = vp;
+			strcpy(str, p->d_name);
+			if (strncmp(leaf_prefix, str, leaf_prefix_len) == 0) {
+				if (complement_time == 0) {
+					strcpy(complement, str + leaf_prefix_len);
+					r = 0;
+					goto out;
+				}
+				--complement_time;
+			}
+			vp += p->d_reclen;
+		}
+	} while (ret > 0);
+
+out:
+	ipc_destroy_msg(ipc_msg);
 	return r;
 
 }
@@ -53,17 +126,20 @@ char *readline(const char *prompt)
 		if (c < 0)
 			return NULL;
 		// TODO: your code here
-		usys_putc(c);
+		if (c != '\t') {
+			complement_time = 0;
+		}
 		if (c == '\b') {
 			// Backspace
 			if (i > 0) {
 				--i;
+				usys_putc('\b');
 				usys_putc(' ');
 				usys_putc('\b');
 			}
 			continue;
 		} else if (c == 127) {
-			// Delelte
+			// Delete
 			if (i > 0) {
 				--i;
 				usys_putc('\b');
@@ -71,10 +147,33 @@ char *readline(const char *prompt)
 				usys_putc('\b');
 			}
 			continue;
-		} else if (c == '\r') {
+		} else if (c == '\r' || c == '\n') {
 			// Return
 			usys_putc('\n');
 			break;
+		} else if (c == '\t') {
+			// Likely buggy implementation
+			if (i > 0) {
+				if (complement_time == 0) {
+					j = i;
+				}
+				int k = j;
+				while (buf[k] != ' ' && k > 0) --k;
+				if (buf[k] == ' ') ++k;
+				char segment[BUFLEN] = {0};
+				strcpy(segment, buf + k);
+				segment[j - k] = '\0';
+				if (do_complement(segment, complement, complement_time) == 0) {
+					strcpy(buf + j, complement);
+					int complement_len = strlen(complement);
+					i = complement_len + j;
+					printf("\r%s%s", prompt, buf);
+					complement_time++;
+				}
+			}
+			continue;
+		} else {
+			usys_putc(c);
 		}
 		buf[i++] = c;
 		if (i == BUFLEN - 1) {
@@ -99,8 +198,8 @@ int do_cd(char *cmdline)
 }
 
 int do_top()
-{
-	// TODO: your code here
+{	
+	usys_top();
 	return 0;
 }
 
